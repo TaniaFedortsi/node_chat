@@ -1,5 +1,4 @@
 import { saveUser } from "./users.js";
-import { getMessages } from "./messages.js";
 import {
   getRooms,
   createRoom,
@@ -71,12 +70,25 @@ chatForm.addEventListener('submit', async function (event) {
 
 
 onMessage((data) => {
-  const newMessage = document.createElement('li');
+  if (data.type === 'room-history') {
+    const oldMessages = data.messages;
 
-  newMessage.textContent = data.author + ' ' + formatTime(data.time) + ' ' + data.text;
+    oldMessages.forEach(message => {
+      const newMessage = document.createElement('li');
+      newMessage.textContent = message.author + ' ' + formatTime(message.time) + ' ' + message.text;
 
-  messages.appendChild(newMessage);
-  messageInput.value = '';
+      messages.appendChild(newMessage);
+    })
+
+  } else {
+    const newMessage = document.createElement('li');
+
+    newMessage.textContent = data.author + ' ' + formatTime(data.time) + ' ' + data.text;
+
+    messages.appendChild(newMessage);
+    messageInput.value = '';
+  }
+
 });
 
 
@@ -161,7 +173,6 @@ rooms.addEventListener('click', async (event) => {
       currentRoom = result;
       joinRoom(currentRoom);
       messages.innerHTML = '';
-      getMessages(currentRoom);
     }
 
     deleteButton.style.display = '';
@@ -183,7 +194,6 @@ rooms.addEventListener('click', async (event) => {
         updateMessageForm(currentRoom);
         joinRoom(currentRoom);
         messages.innerHTML = '';
-        getMessages(currentRoom);
       } else {
         currentRoom = null;
         updateMessageForm(currentRoom);
@@ -206,7 +216,6 @@ rooms.addEventListener('click', async (event) => {
   joinRoom(currentRoom);
 
   messages.innerHTML = '';
-  getMessages(currentRoom);
   }
 });
 
@@ -248,6 +257,6 @@ roomForm.addEventListener('submit', async (event) => {
 
   roomInput.value = '';
 
-  getMessages(currentRoom);
+  joinRoom(currentRoom)
 });
 

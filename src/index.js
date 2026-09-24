@@ -27,14 +27,6 @@ app.get('/users', (req, res) => {
   res.send(users);
 });
 
-app.get('/messages', (req, res) => {
-  const room = req.query.room;
-
-  const roomMessages = messages.filter((message) => message.room === room);
-
-  res.send(roomMessages);
-});
-
 app.post('/rooms', (req, res) => {
   const { room } = req.body;
 
@@ -93,16 +85,32 @@ wss.on('connection', (socket) => {
 
     if (data.type === 'join-room') {
       socket.room = data.room;
+
+      const roomMessages = messages.filter(
+        (message) => message.room === data.room,
+      );
+
+      socket.send(
+        JSON.stringify({
+          type: 'room-history',
+          messages: roomMessages,
+        }),
+      );
     } else if (data.type === 'leave-room') {
       socket.room = null;
     } else {
-      messages.push(data);
+      if (data.author && data.time && data.text) {
+        messages.push(data);
 
-      wss.clients.forEach((client) => {
-        if (client.room === data.room && client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify(data));
-        }
-      });
+        wss.clients.forEach((client) => {
+          if (
+            client.room === data.room &&
+            client.readyState === WebSocket.OPEN
+          ) {
+            client.send(JSON.stringify(data));
+          }
+        });
+      }
     }
   });
 });
